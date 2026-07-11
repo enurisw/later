@@ -1,5 +1,10 @@
+import { LaterProvider } from "./src/context/LaterContext";
 import AppNavigator from "./src/navigation/AppNavigator";
 
 export default function App() {
-  return <AppNavigator />;
+  return (
+    <LaterProvider>
+      <AppNavigator />
+    </LaterProvider>
+  );
 }
