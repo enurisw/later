@@ -1,9 +1,16 @@
-import { Pressable, StyleSheet, Text } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+} from "react-native";
 
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
-import { typography } from "../theme/typography";
+import {
+  fontFamily,
+  typography,
+} from "../theme/typography";
 
 interface ChipProps {
   label: string;
@@ -24,7 +31,9 @@ export default function Chip({
       style={({ pressed }) => [
         styles.base,
         {
-          backgroundColor: selected ? colors.primary : backgroundColor,
+          backgroundColor: selected
+            ? colors.primary
+            : backgroundColor,
         },
         pressed && styles.pressed,
       ]}
@@ -32,7 +41,9 @@ export default function Chip({
       <Text
         style={[
           styles.label,
-          selected ? styles.selectedLabel : styles.defaultLabel,
+          selected
+            ? styles.selectedLabel
+            : styles.defaultLabel,
         ]}
       >
         {label}
@@ -55,8 +66,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    fontFamily: fontFamily.semibold,
     fontSize: typography.small,
-    fontWeight: "600",
   },
 
   selectedLabel: {

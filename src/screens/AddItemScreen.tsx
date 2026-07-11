@@ -15,12 +15,22 @@ import Input from "../components/Input";
 import Screen from "../components/Screen";
 import { categories } from "../constants/categories";
 import { useLater } from "../context/LaterContext";
-import { Category, Priority } from "../types/LaterItem";
 import { colors } from "../theme/colors";
 import { spacing } from "../theme/spacing";
-import { typography } from "../theme/typography";
+import {
+  fontFamily,
+  typography,
+} from "../theme/typography";
+import {
+  Category,
+  Priority,
+} from "../types/LaterItem";
 
-const priorities: Priority[] = ["Low", "Normal", "High"];
+const priorities: Priority[] = [
+  "Low",
+  "Normal",
+  "High",
+];
 
 const categoryColors: Record<Category, string> = {
   Watch: colors.watch,
@@ -46,20 +56,28 @@ export default function AddItemScreen() {
   const { addItem } = useLater();
 
   const [name, setName] = useState("");
-  const [category, setCategory] = useState<Category | null>(null);
-  const [priority, setPriority] = useState<Priority>("Normal");
+  const [category, setCategory] =
+    useState<Category | null>(null);
+  const [priority, setPriority] =
+    useState<Priority>("Normal");
   const [note, setNote] = useState("");
   const [nameError, setNameError] = useState("");
-  const [categoryError, setCategoryError] = useState("");
+  const [categoryError, setCategoryError] =
+    useState("");
   const [isSaving, setIsSaving] = useState(false);
 
-  const canSave = name.trim().length > 0 && category !== null && !isSaving;
+  const canSave =
+    name.trim().length > 0 &&
+    category !== null &&
+    !isSaving;
 
   async function handleSave() {
     const trimmedName = name.trim();
 
     if (!trimmedName) {
-      setNameError("Enter something you want to save.");
+      setNameError(
+        "Enter something you want to save."
+      );
       return;
     }
 
@@ -72,7 +90,9 @@ export default function AddItemScreen() {
       setIsSaving(true);
 
       await addItem({
-        id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+        id: `${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 9)}`,
         name: trimmedName,
         category,
         note: note.trim() || undefined,
@@ -107,14 +127,20 @@ export default function AddItemScreen() {
     <Screen>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={
+          Platform.OS === "ios"
+            ? "padding"
+            : undefined
+        }
       >
         <ScrollView
           contentContainerStyle={styles.content}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.eyebrow}>SAVE FOR LATER</Text>
+          <Text style={styles.eyebrow}>
+            SAVE FOR LATER
+          </Text>
 
           <Text style={styles.title}>
             What do you want to save today?
@@ -137,7 +163,9 @@ export default function AddItemScreen() {
           />
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Category</Text>
+            <Text style={styles.sectionTitle}>
+              Category
+            </Text>
 
             <View style={styles.chipWrap}>
               {categories.map((item) => (
@@ -145,7 +173,9 @@ export default function AddItemScreen() {
                   key={item}
                   label={`${categoryEmoji[item]} ${item}`}
                   selected={category === item}
-                  backgroundColor={categoryColors[item]}
+                  backgroundColor={
+                    categoryColors[item]
+                  }
                   onPress={() => {
                     setCategory(item);
                     setCategoryError("");
@@ -155,12 +185,16 @@ export default function AddItemScreen() {
             </View>
 
             {categoryError ? (
-              <Text style={styles.error}>{categoryError}</Text>
+              <Text style={styles.error}>
+                {categoryError}
+              </Text>
             ) : null}
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Priority</Text>
+            <Text style={styles.sectionTitle}>
+              Priority
+            </Text>
 
             <View style={styles.chipWrap}>
               {priorities.map((item) => (
@@ -185,7 +219,11 @@ export default function AddItemScreen() {
           />
 
           <Button
-            title={isSaving ? "Saving..." : "Save for Later"}
+            title={
+              isSaving
+                ? "Saving..."
+                : "Save for Later"
+            }
             onPress={handleSave}
             disabled={!canSave}
             style={styles.button}
@@ -209,17 +247,17 @@ const styles = StyleSheet.create({
   },
 
   eyebrow: {
+    fontFamily: fontFamily.extraBold,
     fontSize: typography.caption,
-    fontWeight: "800",
     letterSpacing: 1.5,
     color: colors.primary,
   },
 
   title: {
     maxWidth: 320,
+    fontFamily: fontFamily.extraBold,
     fontSize: typography.h1,
     lineHeight: 39,
-    fontWeight: "800",
     color: colors.text,
   },
 
@@ -228,8 +266,8 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
+    fontFamily: fontFamily.semibold,
     fontSize: typography.small,
-    fontWeight: "700",
     color: colors.text,
   },
 
@@ -240,6 +278,7 @@ const styles = StyleSheet.create({
   },
 
   error: {
+    fontFamily: fontFamily.regular,
     fontSize: typography.caption,
     color: colors.danger,
   },

@@ -1,12 +1,18 @@
-import { NavigationContainer } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  createBottomTabNavigator,
+} from "@react-navigation/bottom-tabs";
+import {
+  NavigationContainer,
+} from "@react-navigation/native";
 
-import HomeScreen from "../screens/HomeScreen";
-import CollectionScreen from "../screens/CollectionScreen";
 import AddItemScreen from "../screens/AddItemScreen";
+import CollectionScreen from "../screens/CollectionScreen";
 import DoneScreen from "../screens/DoneScreen";
+import HomeScreen from "../screens/HomeScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import { colors } from "../theme/colors";
+import { fontFamily } from "../theme/typography";
 
 export type RootTabParamList = {
   Home: undefined;
@@ -16,7 +22,8 @@ export type RootTabParamList = {
   Profile: undefined;
 };
 
-const Tab = createBottomTabNavigator<RootTabParamList>();
+const Tab =
+  createBottomTabNavigator<RootTabParamList>();
 
 export default function AppNavigator() {
   return (
@@ -24,34 +31,49 @@ export default function AppNavigator() {
       <Tab.Navigator
         screenOptions={({ route }) => ({
           headerShown: false,
-          tabBarActiveTintColor: "#222222",
-          tabBarInactiveTintColor: "#999999",
+          tabBarActiveTintColor: colors.primary,
+          tabBarInactiveTintColor:
+            colors.textLight,
+
           tabBarStyle: {
             height: 68,
             paddingTop: 7,
             paddingBottom: 8,
-            backgroundColor: "#FFFFFF",
+            backgroundColor: colors.surface,
             borderTopWidth: 0,
             elevation: 8,
           },
+
           tabBarLabelStyle: {
+            fontFamily: fontFamily.semibold,
             fontSize: 11,
-            fontWeight: "600",
           },
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName: keyof typeof Ionicons.glyphMap;
+
+          tabBarIcon: ({
+            focused,
+            color,
+            size,
+          }) => {
+            let iconName:
+              keyof typeof Ionicons.glyphMap;
 
             switch (route.name) {
               case "Home":
-                iconName = focused ? "home" : "home-outline";
+                iconName = focused
+                  ? "home"
+                  : "home-outline";
                 break;
 
               case "Collection":
-                iconName = focused ? "albums" : "albums-outline";
+                iconName = focused
+                  ? "albums"
+                  : "albums-outline";
                 break;
 
               case "Add":
-                iconName = focused ? "add-circle" : "add-circle-outline";
+                iconName = focused
+                  ? "add-circle"
+                  : "add-circle-outline";
                 break;
 
               case "Done":
@@ -61,7 +83,9 @@ export default function AppNavigator() {
                 break;
 
               case "Profile":
-                iconName = focused ? "person" : "person-outline";
+                iconName = focused
+                  ? "person"
+                  : "person-outline";
                 break;
 
               default:
@@ -69,12 +93,19 @@ export default function AppNavigator() {
             }
 
             return (
-              <Ionicons name={iconName} size={size} color={color} />
+              <Ionicons
+                name={iconName}
+                size={size}
+                color={color}
+              />
             );
           },
         })}
       >
-        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen
+          name="Home"
+          component={HomeScreen}
+        />
 
         <Tab.Screen
           name="Collection"
@@ -84,14 +115,17 @@ export default function AppNavigator() {
         <Tab.Screen
           name="Add"
           component={AddItemScreen}
-          options={{
-            tabBarLabel: "Add",
-          }}
         />
 
-        <Tab.Screen name="Done" component={DoneScreen} />
+        <Tab.Screen
+          name="Done"
+          component={DoneScreen}
+        />
 
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen
+          name="Profile"
+          component={ProfileScreen}
+        />
       </Tab.Navigator>
     </NavigationContainer>
   );

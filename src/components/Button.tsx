@@ -1,9 +1,17 @@
-import { Pressable, StyleSheet, Text, ViewStyle } from "react-native";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  ViewStyle,
+} from "react-native";
 
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
-import { typography } from "../theme/typography";
+import {
+  fontFamily,
+  typography,
+} from "../theme/typography";
 
 interface ButtonProps {
   title: string;
@@ -37,7 +45,9 @@ export default function Button({
       <Text
         style={[
           styles.text,
-          isPrimary ? styles.primaryText : styles.secondaryText,
+          isPrimary
+            ? styles.primaryText
+            : styles.secondaryText,
         ]}
       >
         {title}
@@ -73,8 +83,8 @@ const styles = StyleSheet.create({
   },
 
   text: {
+    fontFamily: fontFamily.semibold,
     fontSize: typography.body,
-    fontWeight: "700",
   },
 
   primaryText: {

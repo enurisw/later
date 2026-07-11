@@ -1,9 +1,18 @@
-import { StyleSheet, Text, TextInput, TextInputProps, View } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TextInputProps,
+  View,
+} from "react-native";
 
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
-import { typography } from "../theme/typography";
+import {
+  fontFamily,
+  typography,
+} from "../theme/typography";
 
 interface InputProps extends TextInputProps {
   label?: string;
@@ -19,7 +28,9 @@ export default function Input({
 }: InputProps) {
   return (
     <View style={styles.wrapper}>
-      {label ? <Text style={styles.label}>{label}</Text> : null}
+      {label ? (
+        <Text style={styles.label}>{label}</Text>
+      ) : null}
 
       <TextInput
         {...props}
@@ -33,7 +44,9 @@ export default function Input({
         ]}
       />
 
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? (
+        <Text style={styles.error}>{error}</Text>
+      ) : null}
     </View>
   );
 }
@@ -44,8 +57,8 @@ const styles = StyleSheet.create({
   },
 
   label: {
+    fontFamily: fontFamily.semibold,
     fontSize: typography.small,
-    fontWeight: "600",
     color: colors.text,
   },
 
@@ -58,6 +71,7 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     backgroundColor: colors.surface,
     color: colors.text,
+    fontFamily: fontFamily.regular,
     fontSize: typography.body,
   },
 
@@ -71,6 +85,7 @@ const styles = StyleSheet.create({
   },
 
   error: {
+    fontFamily: fontFamily.regular,
     fontSize: typography.caption,
     color: colors.danger,
   },
