@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import {
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -13,6 +14,7 @@ import Card from "../components/Card";
 import Screen from "../components/Screen";
 import { categories } from "../constants/categories";
 import { useLater } from "../context/LaterContext";
+import { formatSavedAge } from "../lib/date";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -20,7 +22,10 @@ import {
   fontFamily,
   typography,
 } from "../theme/typography";
-import { Category } from "../types/LaterItem";
+import {
+  Category,
+  LaterItem,
+} from "../types/LaterItem";
 
 type CategoryFilter = "All" | Category;
 
@@ -47,29 +52,13 @@ const categoryIcons: Record<
   Buy: "bag-handle-outline",
 };
 
-function formatSavedDate(savedAt: string) {
-  const savedDate = new Date(savedAt);
-  const now = new Date();
-
-  const difference = now.getTime() - savedDate.getTime();
-
-  const days = Math.floor(
-    difference / (1000 * 60 * 60 * 24)
-  );
-
-  if (days <= 0) {
-    return "Saved today";
-  }
-
-  if (days === 1) {
-    return "Saved yesterday";
-  }
-
-  return `Saved ${days} days ago`;
-}
-
 export default function CollectionScreen() {
-  const { items, isLoading } = useLater();
+  const {
+    items,
+    isLoading,
+    updateItem,
+    deleteItem,
+  } = useLater();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] =
@@ -102,7 +91,7 @@ export default function CollectionScreen() {
           ?.toLowerCase()
           .includes(normalizedQuery);
 
-        return nameMatches || noteMatches;
+        return Boolean(nameMatches || noteMatches);
       });
   }, [items, searchQuery, selectedCategory]);
 
@@ -113,6 +102,60 @@ export default function CollectionScreen() {
   function clearFilters() {
     setSearchQuery("");
     setSelectedCategory("All");
+  }
+
+  async function handleMarkDone(item: LaterItem) {
+    try {
+      await updateItem({
+        ...item,
+        status: "Done",
+        completedAt: new Date().toISOString(),
+      });
+    } catch {
+      Alert.alert(
+        "Could not update item",
+        "Please try again."
+      );
+    }
+  }
+
+  function confirmMarkDone(item: LaterItem) {
+    Alert.alert(
+      "Mark as done?",
+      `Move "${item.name}" to Things I Finally Did?`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Mark Done",
+          onPress: () => {
+            void handleMarkDone(item);
+          },
+        },
+      ]
+    );
+  }
+
+  function confirmDelete(item: LaterItem) {
+    Alert.alert(
+      "Delete this item?",
+      `"${item.name}" will be permanently removed.`,
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            void deleteItem(item.id);
+          },
+        },
+      ]
+    );
   }
 
   return (
@@ -150,6 +193,8 @@ export default function CollectionScreen() {
 
           {searchQuery.length > 0 ? (
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Clear search"
               onPress={() => setSearchQuery("")}
               hitSlop={10}
             >
@@ -266,19 +311,15 @@ export default function CollectionScreen() {
                       styles.iconContainer,
                       {
                         backgroundColor:
-                          categoryColors[
-                            item.category
-                          ],
+                          categoryColors[item.category],
                       },
                     ]}
                   >
                     <Ionicons
                       name={
-                        categoryIcons[
-                          item.category
-                        ]
+                        categoryIcons[item.category]
                       }
-                      size={23}
+                      size={24}
                       color={colors.text}
                     />
                   </View>
@@ -291,9 +332,30 @@ export default function CollectionScreen() {
                       {item.name}
                     </Text>
 
-                    <Text style={styles.metadata}>
-                      {item.category} ·{" "}
-                      {item.priority}
+                    <Text style={styles.savedAge}>
+                      {formatSavedAge(item.savedAt)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.badgeRow}>
+                  <View
+                    style={[
+                      styles.badge,
+                      {
+                        backgroundColor:
+                          categoryColors[item.category],
+                      },
+                    ]}
+                  >
+                    <Text style={styles.badgeText}>
+                      {item.category}
+                    </Text>
+                  </View>
+
+                  <View style={styles.priorityBadge}>
+                    <Text style={styles.priorityText}>
+                      {item.priority} priority
                     </Text>
                   </View>
                 </View>
@@ -307,9 +369,47 @@ export default function CollectionScreen() {
                   </Text>
                 ) : null}
 
-                <Text style={styles.savedDate}>
-                  {formatSavedDate(item.savedAt)}
-                </Text>
+                <View style={styles.actionRow}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Mark ${item.name} as done`}
+                    onPress={() =>
+                      confirmMarkDone(item)
+                    }
+                    style={({ pressed }) => [
+                      styles.doneButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Ionicons
+                      name="checkmark-circle-outline"
+                      size={20}
+                      color={colors.text}
+                    />
+
+                    <Text style={styles.doneButtonText}>
+                      Mark Done
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Delete ${item.name}`}
+                    onPress={() =>
+                      confirmDelete(item)
+                    }
+                    style={({ pressed }) => [
+                      styles.deleteButton,
+                      pressed && styles.pressed,
+                    ]}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={20}
+                      color={colors.danger}
+                    />
+                  </Pressable>
+                </View>
               </Card>
             ))}
           </View>
@@ -342,13 +442,14 @@ function FilterChip({
             ? colors.primary
             : backgroundColor,
         },
-        pressed && styles.filterChipPressed,
+        pressed && styles.pressed,
       ]}
     >
       <Text
         style={[
           styles.filterChipText,
-          selected && styles.filterChipTextSelected,
+          selected &&
+            styles.filterChipTextSelected,
         ]}
       >
         {label}
@@ -366,7 +467,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,
-    paddingBottom: 120,
+    paddingBottom: 130,
   },
 
   eyebrow: {
@@ -420,11 +521,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
   },
 
-  filterChipPressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.97 }],
-  },
-
   filterChipText: {
     fontFamily: fontFamily.medium,
     fontSize: typography.small,
@@ -470,8 +566,8 @@ const styles = StyleSheet.create({
   },
 
   iconContainer: {
-    width: 52,
-    height: 52,
+    width: 56,
+    height: 56,
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
@@ -488,24 +584,88 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
 
-  metadata: {
+  savedAge: {
     marginTop: spacing.xs,
     fontFamily: fontFamily.regular,
-    fontSize: typography.body,
+    fontSize: typography.small,
     color: colors.textLight,
+  },
+
+  badgeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+
+  badge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+  },
+
+  badgeText: {
+    fontFamily: fontFamily.medium,
+    fontSize: typography.small,
+    color: colors.text,
+  },
+
+  priorityBadge: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent,
+  },
+
+  priorityText: {
+    fontFamily: fontFamily.medium,
+    fontSize: typography.small,
+    color: colors.text,
   },
 
   note: {
     fontFamily: fontFamily.regular,
     fontSize: typography.body,
     lineHeight: 23,
+    color: colors.textLight,
+  },
+
+  actionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+
+  doneButton: {
+    flex: 1,
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.accent,
+  },
+
+  doneButtonText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: typography.small,
     color: colors.text,
   },
 
-  savedDate: {
-    fontFamily: fontFamily.semibold,
-    fontSize: typography.small,
-    color: colors.primary,
+  deleteButton: {
+    width: 46,
+    height: 46,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  pressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
   },
 
   center: {
