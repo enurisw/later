@@ -1,0 +1,98 @@
+import { NavigationContainer } from "@react-navigation/native";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { Ionicons } from "@expo/vector-icons";
+
+import HomeScreen from "../screens/HomeScreen";
+import CollectionScreen from "../screens/CollectionScreen";
+import AddItemScreen from "../screens/AddItemScreen";
+import DoneScreen from "../screens/DoneScreen";
+import ProfileScreen from "../screens/ProfileScreen";
+
+export type RootTabParamList = {
+  Home: undefined;
+  Collection: undefined;
+  Add: undefined;
+  Done: undefined;
+  Profile: undefined;
+};
+
+const Tab = createBottomTabNavigator<RootTabParamList>();
+
+export default function AppNavigator() {
+  return (
+    <NavigationContainer>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          headerShown: false,
+          tabBarActiveTintColor: "#222222",
+          tabBarInactiveTintColor: "#999999",
+          tabBarStyle: {
+            height: 68,
+            paddingTop: 7,
+            paddingBottom: 8,
+            backgroundColor: "#FFFFFF",
+            borderTopWidth: 0,
+            elevation: 8,
+          },
+          tabBarLabelStyle: {
+            fontSize: 11,
+            fontWeight: "600",
+          },
+          tabBarIcon: ({ focused, color, size }) => {
+            let iconName: keyof typeof Ionicons.glyphMap;
+
+            switch (route.name) {
+              case "Home":
+                iconName = focused ? "home" : "home-outline";
+                break;
+
+              case "Collection":
+                iconName = focused ? "albums" : "albums-outline";
+                break;
+
+              case "Add":
+                iconName = focused ? "add-circle" : "add-circle-outline";
+                break;
+
+              case "Done":
+                iconName = focused
+                  ? "checkmark-circle"
+                  : "checkmark-circle-outline";
+                break;
+
+              case "Profile":
+                iconName = focused ? "person" : "person-outline";
+                break;
+
+              default:
+                iconName = "ellipse-outline";
+            }
+
+            return (
+              <Ionicons name={iconName} size={size} color={color} />
+            );
+          },
+        })}
+      >
+        <Tab.Screen name="Home" component={HomeScreen} />
+
+        <Tab.Screen
+          name="Collection"
+          component={CollectionScreen}
+        />
+
+        <Tab.Screen
+          name="Add"
+          component={AddItemScreen}
+          options={{
+            tabBarLabel: "Add",
+          }}
+        />
+
+        <Tab.Screen name="Done" component={DoneScreen} />
+
+        <Tab.Screen name="Profile" component={ProfileScreen} />
+      </Tab.Navigator>
+    </NavigationContainer>
+  );
+}

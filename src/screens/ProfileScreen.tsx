@@ -1,10 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
 
-export default function AddItemScreen() {
+export default function ProfileScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Save for Later</Text>
-      <Text style={styles.subtitle}>Add something you want to remember.</Text>
+      <Text style={styles.title}>Profile</Text>
+      <Text style={styles.subtitle}>
+        Your statistics and settings will appear here.
+      </Text>
     </View>
   );
 }

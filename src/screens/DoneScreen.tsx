@@ -1,10 +1,12 @@
 import { StyleSheet, Text, View } from "react-native";
 
-export default function AddItemScreen() {
+export default function DoneScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Save for Later</Text>
-      <Text style={styles.subtitle}>Add something you want to remember.</Text>
+      <Text style={styles.title}>Things I Finally Did</Text>
+      <Text style={styles.subtitle}>
+        Completed experiences will appear here.
+      </Text>
     </View>
   );
 }
