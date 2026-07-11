@@ -1,3 +1,9 @@
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import {
+  CompositeNavigationProp,
+  useNavigation,
+} from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Ionicons } from "@expo/vector-icons";
 import { useMemo, useState } from "react";
 import {
@@ -13,6 +19,10 @@ import Card from "../components/Card";
 import Screen from "../components/Screen";
 import { categories } from "../constants/categories";
 import { useLater } from "../context/LaterContext";
+import {
+  RootStackParamList,
+  RootTabParamList,
+} from "../navigation/AppNavigator";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
 import { spacing } from "../theme/spacing";
@@ -21,6 +31,11 @@ import {
   typography,
 } from "../theme/typography";
 import { Category } from "../types/LaterItem";
+
+type HomeNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<RootTabParamList, "Home">,
+  NativeStackNavigationProp<RootStackParamList>
+>;
 
 const categoryColors: Record<Category, string> = {
   Watch: colors.watch,
@@ -69,6 +84,7 @@ function getGreeting() {
 }
 
 export default function HomeScreen() {
+  const navigation = useNavigation<HomeNavigationProp>();
   const { items } = useLater();
 
   const [selectedCategory, setSelectedCategory] =
@@ -81,11 +97,34 @@ export default function HomeScreen() {
     [items]
   );
 
+  const doneItems = useMemo(
+    () => items.filter((item) => item.status === "Done"),
+    [items]
+  );
+
   const selectedCount = selectedCategory
     ? laterItems.filter(
         (item) => item.category === selectedCategory
       ).length
     : laterItems.length;
+
+  function handleCategoryPress(category: Category) {
+    setSelectedCategory((currentCategory) =>
+      currentCategory === category ? null : category
+    );
+  }
+
+  function handleSuggestionPress() {
+    navigation.navigate("Suggestion", {
+      category: selectedCategory ?? undefined,
+    });
+  }
+
+  function getCategoryCount(category: Category) {
+    return laterItems.filter(
+      (item) => item.category === category
+    ).length;
+  }
 
   return (
     <Screen>
@@ -111,13 +150,21 @@ export default function HomeScreen() {
             </View>
           </View>
 
-          <View style={styles.profileButton}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open profile"
+            onPress={() => navigation.navigate("Profile")}
+            style={({ pressed }) => [
+              styles.profileButton,
+              pressed && styles.pressed,
+            ]}
+          >
             <Ionicons
               name="person-outline"
               size={22}
               color={colors.text}
             />
-          </View>
+          </Pressable>
         </View>
 
         <View style={styles.hero}>
@@ -130,8 +177,8 @@ export default function HomeScreen() {
           </Text>
 
           <Text style={styles.subtitle}>
-            Choose a mood and Later will help you find
-            something you saved.
+            Choose a category and Later will help you
+            rediscover something you saved.
           </Text>
         </View>
 
@@ -140,13 +187,19 @@ export default function HomeScreen() {
             const isSelected =
               selectedCategory === category;
 
+            const categoryCount =
+              getCategoryCount(category);
+
             return (
               <Pressable
                 key={category}
+                accessibilityRole="button"
+                accessibilityState={{
+                  selected: isSelected,
+                }}
+                accessibilityLabel={`${category}, ${categoryCount} saved`}
                 onPress={() =>
-                  setSelectedCategory(
-                    isSelected ? null : category
-                  )
+                  handleCategoryPress(category)
                 }
                 style={({ pressed }) => [
                   styles.categoryCard,
@@ -172,13 +225,10 @@ export default function HomeScreen() {
                 </Text>
 
                 <Text style={styles.categoryCount}>
-                  {
-                    laterItems.filter(
-                      (item) =>
-                        item.category === category
-                    ).length
-                  }{" "}
-                  saved
+                  {categoryCount}{" "}
+                  {categoryCount === 1
+                    ? "item"
+                    : "items"}
                 </Text>
 
                 {isSelected ? (
@@ -212,7 +262,9 @@ export default function HomeScreen() {
 
               <Text style={styles.suggestionTitle}>
                 {selectedCategory
-                  ? `${selectedCount} ${selectedCategory.toLowerCase()} ${
+                  ? `${selectedCount} ${
+                      selectedCategory
+                    } ${
                       selectedCount === 1
                         ? "idea"
                         : "ideas"
@@ -240,7 +292,7 @@ export default function HomeScreen() {
                 ? `Pick from ${selectedCategory}`
                 : "Pick Something For Me"
             }
-            onPress={() => {}}
+            onPress={handleSuggestionPress}
             disabled={selectedCount === 0}
           />
         </Card>
@@ -250,20 +302,22 @@ export default function HomeScreen() {
             <Text style={styles.statNumber}>
               {laterItems.length}
             </Text>
-            <Text style={styles.statLabel}>Saved</Text>
+
+            <Text style={styles.statLabel}>
+              Saved
+            </Text>
           </View>
 
           <View style={styles.divider} />
 
           <View style={styles.statItem}>
             <Text style={styles.statNumber}>
-              {
-                items.filter(
-                  (item) => item.status === "Done"
-                ).length
-              }
+              {doneItems.length}
             </Text>
-            <Text style={styles.statLabel}>Completed</Text>
+
+            <Text style={styles.statLabel}>
+              Completed
+            </Text>
           </View>
 
           <View style={styles.divider} />
@@ -278,6 +332,7 @@ export default function HomeScreen() {
                 ).size
               }
             </Text>
+
             <Text style={styles.statLabel}>
               Categories
             </Text>
@@ -296,7 +351,7 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,
-    paddingBottom: 120,
+    paddingBottom: 130,
   },
 
   topRow: {
@@ -333,6 +388,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+
+  pressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
   },
 
   hero: {
@@ -386,18 +446,13 @@ const styles = StyleSheet.create({
     borderColor: colors.primary,
   },
 
-  pressed: {
-    opacity: 0.8,
-    transform: [{ scale: 0.98 }],
-  },
-
   categoryIcon: {
     width: 48,
     height: 48,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.55)",
+    backgroundColor: "rgba(255, 255, 255, 0.55)",
   },
 
   categoryName: {
