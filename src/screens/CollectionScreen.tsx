@@ -1,13 +1,17 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useMemo, useState } from "react";
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from "react-native";
 
 import Card from "../components/Card";
 import Screen from "../components/Screen";
+import { categories } from "../constants/categories";
 import { useLater } from "../context/LaterContext";
 import { colors } from "../theme/colors";
 import { radius } from "../theme/radius";
@@ -17,6 +21,8 @@ import {
   typography,
 } from "../theme/typography";
 import { Category } from "../types/LaterItem";
+
+type CategoryFilter = "All" | Category;
 
 const categoryColors: Record<Category, string> = {
   Watch: colors.watch,
@@ -45,8 +51,7 @@ function formatSavedDate(savedAt: string) {
   const savedDate = new Date(savedAt);
   const now = new Date();
 
-  const difference =
-    now.getTime() - savedDate.getTime();
+  const difference = now.getTime() - savedDate.getTime();
 
   const days = Math.floor(
     difference / (1000 * 60 * 60 * 24)
@@ -66,9 +71,49 @@ function formatSavedDate(savedAt: string) {
 export default function CollectionScreen() {
   const { items, isLoading } = useLater();
 
-  const laterItems = items.filter(
-    (item) => item.status === "Later"
-  );
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] =
+    useState<CategoryFilter>("All");
+
+  const filteredItems = useMemo(() => {
+    const normalizedQuery = searchQuery
+      .trim()
+      .toLowerCase();
+
+    return items
+      .filter((item) => item.status === "Later")
+      .filter((item) => {
+        if (selectedCategory === "All") {
+          return true;
+        }
+
+        return item.category === selectedCategory;
+      })
+      .filter((item) => {
+        if (!normalizedQuery) {
+          return true;
+        }
+
+        const nameMatches = item.name
+          .toLowerCase()
+          .includes(normalizedQuery);
+
+        const noteMatches = item.note
+          ?.toLowerCase()
+          .includes(normalizedQuery);
+
+        return nameMatches || noteMatches;
+      });
+  }, [items, searchQuery, selectedCategory]);
+
+  const hasActiveFilters =
+    searchQuery.trim().length > 0 ||
+    selectedCategory !== "All";
+
+  function clearFilters() {
+    setSearchQuery("");
+    setSelectedCategory("All");
+  }
 
   return (
     <Screen>
@@ -76,6 +121,7 @@ export default function CollectionScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.container}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.eyebrow}>
           YOUR COLLECTION
@@ -85,12 +131,84 @@ export default function CollectionScreen() {
           Things saved for later
         </Text>
 
-        <Text style={styles.count}>
-          {laterItems.length}{" "}
-          {laterItems.length === 1
-            ? "item"
-            : "items"}
-        </Text>
+        <View style={styles.searchContainer}>
+          <Ionicons
+            name="search-outline"
+            size={20}
+            color={colors.textLight}
+          />
+
+          <TextInput
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search your saved items"
+            placeholderTextColor={colors.textLight}
+            style={styles.searchInput}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+          />
+
+          {searchQuery.length > 0 ? (
+            <Pressable
+              onPress={() => setSearchQuery("")}
+              hitSlop={10}
+            >
+              <Ionicons
+                name="close-circle"
+                size={20}
+                color={colors.textLight}
+              />
+            </Pressable>
+          ) : null}
+        </View>
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterRow}
+        >
+          <FilterChip
+            label="All"
+            selected={selectedCategory === "All"}
+            backgroundColor={colors.accent}
+            onPress={() =>
+              setSelectedCategory("All")
+            }
+          />
+
+          {categories.map((category) => (
+            <FilterChip
+              key={category}
+              label={category}
+              selected={
+                selectedCategory === category
+              }
+              backgroundColor={
+                categoryColors[category]
+              }
+              onPress={() =>
+                setSelectedCategory(category)
+              }
+            />
+          ))}
+        </ScrollView>
+
+        <View style={styles.resultsHeader}>
+          <Text style={styles.count}>
+            {filteredItems.length}{" "}
+            {filteredItems.length === 1
+              ? "item"
+              : "items"}
+          </Text>
+
+          {hasActiveFilters ? (
+            <Pressable onPress={clearFilters}>
+              <Text style={styles.clearText}>
+                Clear filters
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
 
         {isLoading ? (
           <View style={styles.center}>
@@ -98,29 +216,46 @@ export default function CollectionScreen() {
               Loading your collection...
             </Text>
           </View>
-        ) : laterItems.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <View style={styles.center}>
             <View style={styles.emptyIcon}>
               <Ionicons
-                name="albums-outline"
+                name={
+                  hasActiveFilters
+                    ? "search-outline"
+                    : "albums-outline"
+                }
                 size={42}
                 color={colors.primary}
               />
             </View>
 
             <Text style={styles.emptyTitle}>
-              Nothing saved yet
+              {hasActiveFilters
+                ? "No matching items"
+                : "Nothing saved yet"}
             </Text>
 
             <Text style={styles.emptyText}>
-              Add a movie, restaurant, book,
-              place, or anything else you want
-              to rediscover later.
+              {hasActiveFilters
+                ? "Try another search or choose a different category."
+                : "Add a movie, restaurant, book, place, or anything else you want to rediscover later."}
             </Text>
+
+            {hasActiveFilters ? (
+              <Pressable
+                style={styles.clearButton}
+                onPress={clearFilters}
+              >
+                <Text style={styles.clearButtonText}>
+                  Show all items
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         ) : (
           <View style={styles.list}>
-            {laterItems.map((item) => (
+            {filteredItems.map((item) => (
               <Card
                 key={item.id}
                 style={styles.card}
@@ -143,13 +278,16 @@ export default function CollectionScreen() {
                           item.category
                         ]
                       }
-                      size={22}
+                      size={23}
                       color={colors.text}
                     />
                   </View>
 
                   <View style={styles.cardContent}>
-                    <Text style={styles.itemName}>
+                    <Text
+                      style={styles.itemName}
+                      numberOfLines={2}
+                    >
                       {item.name}
                     </Text>
 
@@ -161,7 +299,10 @@ export default function CollectionScreen() {
                 </View>
 
                 {item.note ? (
-                  <Text style={styles.note}>
+                  <Text
+                    style={styles.note}
+                    numberOfLines={3}
+                  >
                     {item.note}
                   </Text>
                 ) : null}
@@ -178,6 +319,44 @@ export default function CollectionScreen() {
   );
 }
 
+interface FilterChipProps {
+  label: string;
+  selected: boolean;
+  backgroundColor: string;
+  onPress: () => void;
+}
+
+function FilterChip({
+  label,
+  selected,
+  backgroundColor,
+  onPress,
+}: FilterChipProps) {
+  return (
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.filterChip,
+        {
+          backgroundColor: selected
+            ? colors.primary
+            : backgroundColor,
+        },
+        pressed && styles.filterChipPressed,
+      ]}
+    >
+      <Text
+        style={[
+          styles.filterChipText,
+          selected && styles.filterChipTextSelected,
+        ]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
@@ -191,7 +370,7 @@ const styles = StyleSheet.create({
   },
 
   eyebrow: {
-    fontFamily: fontFamily.extraBold,
+    fontFamily: fontFamily.semibold,
     fontSize: typography.caption,
     letterSpacing: 1.5,
     color: colors.primary,
@@ -199,18 +378,81 @@ const styles = StyleSheet.create({
 
   title: {
     marginTop: spacing.sm,
-    fontFamily: fontFamily.extraBold,
-    fontSize: typography.h1,
-    lineHeight: 39,
+    maxWidth: 340,
+    fontFamily: fontFamily.semibold,
+    fontSize: typography.display,
+    lineHeight: 44,
     color: colors.text,
   },
 
-  count: {
+  searchContainer: {
+    minHeight: 52,
+    marginTop: spacing.xl,
+    paddingHorizontal: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+
+  searchInput: {
+    flex: 1,
+    paddingVertical: spacing.md,
+    fontFamily: fontFamily.regular,
+    fontSize: typography.body,
+    color: colors.text,
+  },
+
+  filterRow: {
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
+  },
+
+  filterChip: {
+    minHeight: 38,
+    paddingHorizontal: spacing.md,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: radius.full,
+  },
+
+  filterChipPressed: {
+    opacity: 0.75,
+    transform: [{ scale: 0.97 }],
+  },
+
+  filterChipText: {
+    fontFamily: fontFamily.medium,
+    fontSize: typography.small,
+    color: colors.text,
+  },
+
+  filterChipTextSelected: {
+    color: colors.surface,
+  },
+
+  resultsHeader: {
     marginTop: spacing.sm,
     marginBottom: spacing.lg,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+
+  count: {
     fontFamily: fontFamily.regular,
     fontSize: typography.body,
     color: colors.textLight,
+  },
+
+  clearText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: typography.small,
+    color: colors.primary,
   },
 
   list: {
@@ -228,8 +470,8 @@ const styles = StyleSheet.create({
   },
 
   iconContainer: {
-    width: 48,
-    height: 48,
+    width: 52,
+    height: 52,
     borderRadius: radius.md,
     alignItems: "center",
     justifyContent: "center",
@@ -241,14 +483,15 @@ const styles = StyleSheet.create({
 
   itemName: {
     fontFamily: fontFamily.semibold,
-    fontSize: typography.h3,
+    fontSize: typography.subheading,
+    lineHeight: 25,
     color: colors.text,
   },
 
   metadata: {
     marginTop: spacing.xs,
     fontFamily: fontFamily.regular,
-    fontSize: typography.small,
+    fontSize: typography.body,
     color: colors.textLight,
   },
 
@@ -261,13 +504,13 @@ const styles = StyleSheet.create({
 
   savedDate: {
     fontFamily: fontFamily.semibold,
-    fontSize: typography.caption,
+    fontSize: typography.small,
     color: colors.primary,
   },
 
   center: {
     flexGrow: 1,
-    minHeight: 380,
+    minHeight: 360,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: spacing.lg,
@@ -276,26 +519,41 @@ const styles = StyleSheet.create({
   emptyIcon: {
     width: 84,
     height: 84,
+    marginBottom: spacing.lg,
     borderRadius: radius.full,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.secondary,
-    marginBottom: spacing.lg,
   },
 
   emptyTitle: {
-    fontFamily: fontFamily.extraBold,
-    fontSize: typography.h2,
+    fontFamily: fontFamily.semibold,
+    fontSize: typography.heading,
+    textAlign: "center",
     color: colors.text,
   },
 
   emptyText: {
     marginTop: spacing.sm,
     maxWidth: 290,
-    textAlign: "center",
     fontFamily: fontFamily.regular,
     fontSize: typography.body,
     lineHeight: 24,
+    textAlign: "center",
     color: colors.textLight,
+  },
+
+  clearButton: {
+    marginTop: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.md,
+    borderRadius: radius.full,
+    backgroundColor: colors.primary,
+  },
+
+  clearButtonText: {
+    fontFamily: fontFamily.semibold,
+    fontSize: typography.small,
+    color: colors.surface,
   },
 });

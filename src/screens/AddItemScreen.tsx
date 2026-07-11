@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   title: {
     maxWidth: 320,
     fontFamily: fontFamily.extraBold,
-    fontSize: typography.h1,
+    fontSize: typography.heading,
     lineHeight: 39,
     color: colors.text,
   },
